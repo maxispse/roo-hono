@@ -3,18 +3,42 @@ import { ref, onMounted } from 'vue'
 import VideoCard from '../components/VideoCard.vue'
 
 const videos = ref([])
+const loading = ref(true)
 
 onMounted(async () => {
-  const res = await fetch('http://localhost:3000/videos')
-  videos.value = await res.json()
+  try {
+    const res = await fetch('http://localhost:3000/videos')
+    videos.value = await res.json()
+  } catch (err) {
+    console.error('Failed to fetch videos:', err)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-4 p-8">
+  <!-- loading state -->
+  <div v-if="loading" class="flex justify-center items-center h-full p-16">
+    <div class="w-12 h-12 border-4 border-[#CB3939] border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- empty state -->
+  <div v-else-if="videos.length === 0" class="flex flex-col justify-center items-center h-full p-16 gap-4">
+    <img src="../assets/ScrollTubeLogo.png" class="w-24 h-24 opacity-30" />
+    <p class="text-gray-500 text-xl font-semibold">No videos yet</p>
+    <p class="text-gray-400">Be the first to upload one!</p>
+    <RouterLink to="/upload" class="bg-[#CB3939] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#DF4F4F] transition">
+      Upload Video
+    </RouterLink>
+  </div>
+
+  <!-- videos grid -->
+  <div v-else class="flex flex-wrap gap-4 p-8">
     <VideoCard
       v-for="video in videos"
       :key="video.id"
+      :id="video.id"
       :title="video.title"
       :thumbnail="video.url"
       :channelName="video.username"

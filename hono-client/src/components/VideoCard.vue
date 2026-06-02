@@ -19,11 +19,14 @@ export default {
         :src="`http://localhost:3000${thumbnail}`"
         class="w-full h-[180px] object-cover rounded-lg"
         muted
-        @mouseover="$event.target.play()"
-        @mouseleave="$event.target.pause()"
+        @mouseover.stop="$event.target.play()"
+        @mouseleave.stop="$event.target.pause()"
+        @click.prevent.stop
       />
       <h3 class="text-lg font-semibold mt-2 dark:text-white">{{ title }}</h3>
-      <p class="text-sm text-gray-600">{{ channelName }}</p>
+      <RouterLink :to="`/channel/${channelName}`" @click.stop class="text-sm text-gray-600 hover:text-[#CB3939]">
+        {{ channelName }}
+      </RouterLink>
       <p class="text-sm text-gray-600">{{ views }} views • {{ uploadDate }}</p>
     </div>
   </RouterLink>

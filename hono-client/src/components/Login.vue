@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth } from '../stores/auth'
 
-
 const router = useRouter()
 const email = ref('')
 const password = ref('')
@@ -14,14 +13,13 @@ async function login() {
     const res = await fetch('http://localhost:3000/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      headers: {'Authorization': `Bearer ${localStorage.getItem('token')}`},
+      credentials: 'include',
       body: JSON.stringify({ email: email.value, password: password.value })
     })
-    
     const data = await res.json()
     if (!res.ok) return error.value = data.error
 
-    auth.login(data.token, data.username)
+    auth.login(data.username, data.id, data.role)
     router.push('/')
   } catch (err) {
     error.value = 'Something went wrong'

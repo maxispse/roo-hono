@@ -1,24 +1,44 @@
 import { reactive } from 'vue'
 
 export const auth = reactive({
-  token: localStorage.getItem('token') || null,
-  username: localStorage.getItem('username') || null,
+  username: null as string | null,
+  id: null as number | null,
+  role: null as string | null,
 
   get isLoggedIn() {
-    return !!this.token
+    return !!this.username
   },
 
-  login(token: string, username: string) {
-    this.token = token
+  get isAdmin() {
+    return this.role === 'admin'
+  },
+
+  async fetchMe() {
+    try {
+      const res = await fetch('http://localhost:3000/auth/me', {
+        credentials: 'include'
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      this.username = data.username
+      this.id = data.id
+      this.role = data.role
+    } catch {
+      this.username = null
+      this.id = null
+      this.role = null
+    }
+  },
+
+  login(username: string, id: number, role: string) {
     this.username = username
-    localStorage.setItem('token', token)
-    localStorage.setItem('username', username)
+    this.id = id
+    this.role = role
   },
 
   logout() {
-    this.token = null
     this.username = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
+    this.id = null
+    this.role = null
   }
 })
