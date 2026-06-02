@@ -1,5 +1,8 @@
 import { serve } from '@hono/node-server'
-import app from './index.ts'
+import { serveStatic } from '@hono/node-server/serve-static'
+import app from './index'
+
+app.use('/uploads/*', serveStatic({ root: './' }))
 
 serve({
   fetch: app.fetch,
