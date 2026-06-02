@@ -1,9 +1,11 @@
 <template>
   <div class="flex items-start w-full bg-[#D9D9D9] dark:bg-gray-700 top-0 h-screen sticky">
+    <RouterLink to="/">
     <img 
       src="../assets/ScrollTubeLogo.png"
       class="w-[128px] h-[128px] block top-0 sticky"
     />
+    </RouterLink>
     <div class="flex flex-row gap-2 mt-10 ml-8">
       <h1 class="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent hidden sm:text-4xl">ScrollTube</h1>
       <div class="w-[2px] h-[32px]  ml-150 g-4">
