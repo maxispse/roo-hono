@@ -1,9 +1,14 @@
-<script setup lang="ts">
-import { h } from 'vue';
+<script setup>
+import { auth } from '../stores/auth'
 </script>
 
-
-
 <template>
-  <h1> Stars </h1>
+  <!-- show different UI based on login state -->
+  <div v-if="auth.isLoggedIn">
+    <p>Welcome, {{ auth.username }}!</p>
+    <button @click="auth.logout()">Logout</button>
+  </div>
+  <div v-else>
+    <RouterLink to="/loginPage">Login</RouterLink>
+  </div>
 </template>
