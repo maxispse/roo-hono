@@ -23,11 +23,13 @@ export default {
         @mouseleave.stop="$event.target.pause()"
         @click.prevent.stop
       />
-      <h3 class="text-lg font-semibold mt-2 dark:text-white">{{ title }}</h3>
-      <RouterLink :to="`/channel/${channelName}`" @click.stop class="text-sm text-gray-600 hover:text-[#CB3939]">
-        {{ channelName }}
-      </RouterLink>
-      <p class="text-sm text-gray-600">{{ views }} views • {{ uploadDate }}</p>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-3 mt-1">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
+        <RouterLink :to="`/channel/${channelName}`" @click.stop class="text-sm text-gray-600 dark:text-gray-400 hover:text-[#CB3939]">
+          {{ channelName }}
+        </RouterLink>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ views }} views • {{ uploadDate }}</p>
+      </div>
     </div>
   </RouterLink>
 </template>

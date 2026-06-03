@@ -14,9 +14,13 @@ const channelUser = ref(Array.isArray(route.params.username)
   ? route.params.username[0] 
   : route.params.username || auth.username
 )
+const channelProfile = ref({ username: '', avatar: null as string | null })
 
 onMounted(async () => {
   try {
+    const profileRes = await fetch(`http://localhost:3000/users/${channelUser.value}`)
+    channelProfile.value = await profileRes.json()
+
     // fetch videos
     const res = await fetch(`http://localhost:3000/videos/user/${channelUser.value}`, {
       credentials: 'include'
@@ -74,11 +78,16 @@ async function logout() {
     <div class="w-full h-[200px] bg-[#CB3939]"></div>
     <div class="max-w-5xl mx-auto w-full px-8">
       <div class="flex items-center gap-6 -mt-12 mb-8">
-        <div class="w-[100px] h-[100px] rounded-full bg-[#DF4F4F] border-4 border-white flex items-center justify-center">
-          <span class="text-white text-4xl font-bold">
-            {{ channelUser?.toString().charAt(0).toUpperCase() }}
-          </span>
-        </div>
+        <div class="w-[100px] h-[100px] rounded-full bg-[#DF4F4F] border-4 border-white overflow-hidden flex items-center justify-center">
+  <img
+    v-if="channelProfile.avatar"
+    :src="`http://localhost:3000${channelProfile.avatar}`"
+    class="w-full h-full object-cover"
+  />
+  <span v-else class="text-white text-4xl font-bold">
+    {{ channelUser?.toString().charAt(0).toUpperCase() }}
+  </span>
+</div>
         <div class="mt-12">
           <h1 class="text-2xl font-bold text-gray-900">{{ channelUser }}</h1>
           <p class="text-gray-500 text-sm">{{ subscriberCount }} subscribers • {{ videos.length }} videos</p>

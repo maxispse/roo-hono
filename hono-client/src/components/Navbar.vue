@@ -1,22 +1,31 @@
+<script setup>
+import { useDarkMode } from '../composables/useDarkMode'
+const { isDark, toggle } = useDarkMode()
+</script>
+
 <template>
-  <div class="flex items-start w-full bg-[#D9D9D9] dark:bg-gray-700 top-0 h-screen sticky">
+  <div class="flex items-center w-full bg-[#D9D9D9] dark:bg-gray-800 sticky top-0 z-10">
     <RouterLink to="/">
     <img 
       src="../assets/ScrollTubeLogo.png"
-      class="w-[128px] h-[128px] block top-0 sticky"
+      class="w-[128px] h-[128px] bg-[#DF4F4F] block"
     />
     </RouterLink>
-    <div class="flex flex-row gap-2 mt-10 ml-8">
-      <h1 class="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent hidden sm:text-4xl">ScrollTube</h1>
-      <div class="w-[2px] h-[32px]  ml-150 g-4">
-        <input type="text" class="w-50 h-10 border-2  text-[#CB3939] text-sm bg-white rounded dark:bg-gray-500 text-white" placeholder="Search..." />
-      </div>
+    <div class="flex flex-row gap-2 justify-center ml-8">
+      <h1 class="text-3xl font-bold text-[#CB3939]">ScrollTube</h1>
     </div>
 
-    <div class="flex flex-row gap-4 ml-auto mt-10 mr-8">
-       <RouterLink to="/login">
-      <img src="../assets/image copy.png" class="w-[64px] h-[64px] rounded-2xl" />
-    </RouterLink>
+    <div class="ml-auto mr-8 flex items-center gap-4">
+      <!-- dark mode toggle -->
+      <button
+        @click="toggle"
+        class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xl"
+      >
+        {{ isDark ? '☀️' : '🌙' }}
+      </button>
+      <RouterLink to="/loginPage">
+        <img src="../assets/image copy.png" class="w-[48px] h-[48px] rounded-2xl" />
+      </RouterLink>
     </div>
   </div>
 </template>

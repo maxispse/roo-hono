@@ -19,22 +19,22 @@ onMounted(async () => {
 
 <template>
   <!-- loading state -->
-  <div v-if="loading" class="flex justify-center items-center h-full p-16">
+  <div v-if="loading" class="flex justify-center items-center h-full p-16 bg-gray-200 dark:bg-gray-900">
     <div class="w-12 h-12 border-4 border-[#CB3939] border-t-transparent rounded-full animate-spin"></div>
   </div>
 
   <!-- empty state -->
-  <div v-else-if="videos.length === 0" class="flex flex-col justify-center items-center h-full p-16 gap-4">
+  <div v-else-if="videos.length === 0" class="flex flex-col justify-center items-center h-full p-16 gap-4 bg-gray-200 dark:bg-gray-900">
     <img src="../assets/ScrollTubeLogo.png" class="w-24 h-24 opacity-30" />
-    <p class="text-gray-500 text-xl font-semibold">No videos yet</p>
-    <p class="text-gray-400">Be the first to upload one!</p>
+    <p class="text-gray-500 dark:text-gray-400 text-xl font-semibold">No videos yet</p>
+    <p class="text-gray-400 dark:text-gray-500">Be the first to upload one!</p>
     <RouterLink to="/upload" class="bg-[#CB3939] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#DF4F4F] transition">
       Upload Video
     </RouterLink>
   </div>
 
   <!-- videos grid -->
-  <div v-else class="flex flex-wrap gap-4 p-8">
+  <div v-else class="flex flex-wrap gap-4 p-8 bg-gray-200 dark:bg-gray-900 min-h-full">
     <VideoCard
       v-for="video in videos"
       :key="video.id"

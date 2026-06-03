@@ -4,6 +4,7 @@ export const auth = reactive({
   username: null as string | null,
   id: null as number | null,
   role: null as string | null,
+  avatar: null as string | null,
 
   get isLoggedIn() {
     return !!this.username
@@ -23,10 +24,12 @@ export const auth = reactive({
       this.username = data.username
       this.id = data.id
       this.role = data.role
+      this.avatar = data.avatar
     } catch {
       this.username = null
       this.id = null
       this.role = null
+      this.avatar = null
     }
   },
 
@@ -40,5 +43,6 @@ export const auth = reactive({
     this.username = null
     this.id = null
     this.role = null
+    this.avatar = null
   }
 })

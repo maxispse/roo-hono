@@ -133,6 +133,17 @@ app.get('/subscriptions/check/:username', authMiddleware, async (c) => {
   return c.json({ subscribed: checkRows.length > 0 })
 })
 
+app.get('/subscriptions/following', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const [rows] = await db.query(`
+    SELECT users.id, users.username 
+    FROM subscriptions 
+    JOIN users ON subscriptions.channel_id = users.id 
+    WHERE subscriptions.subscriber_id = ?
+  `, [user.id]) as any
+  return c.json(rows)
+})
+
 app.get('/videos/user/:username', async (c) => {
   const username = c.req.param('username')
   const [videos] = await db.query('SELECT * FROM videos WHERE username = ?', [username]) as any
@@ -223,11 +234,61 @@ app.get('/auth/me', async (c) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any
-    const [rows] = await db.query('SELECT id, email, username, role FROM users WHERE id = ?', [decoded.id]) as any
+    const [rows] = await db.query('SELECT id, email, username, role, avatar FROM users WHERE id = ?', [decoded.id]) as any
     return c.json(rows[0])
   } catch {
     return c.json({ error: 'Invalid token' }, 401)
   }
+})
+
+app.patch('/users/username', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const { username } = await c.req.json()
+
+  if (!username) return c.json({ error: 'Username is required' }, 400)
+
+  try {
+    await db.query('UPDATE users SET username = ? WHERE id = ?', [username, user.id])
+    return c.json({ message: 'Username updated', username })
+  } catch {
+    return c.json({ error: 'Username already taken' }, 400)
+  }
+})
+
+app.post('/users/avatar', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const body = await c.req.parseBody()
+  const file = body['avatar'] as File
+
+  if (!file) return c.json({ error: 'No file provided' }, 400)
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    return c.json({ error: 'Only jpg, png, and webp files are allowed' }, 400)
+  }
+
+  const uploadsDir = join(process.cwd(), 'uploads/avatars')
+  if (!existsSync(uploadsDir)) await mkdir(uploadsDir, { recursive: true })
+
+  const filename = `${user.id}-${Date.now()}.${file.name.split('.').pop()}`
+  const filepath = join(uploadsDir, filename)
+  const buffer = await file.arrayBuffer()
+  await writeFile(filepath, Buffer.from(buffer))
+
+  const avatarUrl = `/uploads/avatars/${filename}`
+  await db.query('UPDATE users SET avatar = ? WHERE id = ?', [avatarUrl, user.id])
+
+  return c.json({ message: 'Avatar updated', avatar: avatarUrl })
+})
+
+app.get('/users/:username', async (c) => {
+  const username = c.req.param('username')
+  const [rows] = await db.query(
+    'SELECT id, username, avatar FROM users WHERE username = ?',
+    [username]
+  ) as any
+  if (!rows[0]) return c.json({ error: 'User not found' }, 404)
+  return c.json(rows[0])
 })
 
 
