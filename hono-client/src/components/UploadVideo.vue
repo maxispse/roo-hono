@@ -30,6 +30,7 @@ async function upload() {
   try {
     const res = await fetch('http://localhost:3000/videos/upload', {
       method: 'POST',
+      credentials: 'include',
       body: formData
     })
     const data = await res.json()

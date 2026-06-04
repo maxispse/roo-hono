@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import VideoCard from '../components/VideoCard.vue'
 
 const videos = ref([])
 const loading = ref(true)
+let eventSource: EventSource | null = null
 
 onMounted(async () => {
   try {
@@ -14,16 +15,37 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+
+  // connect to SSE
+  eventSource = new EventSource('http://localhost:3000/sse')
+
+  eventSource.onmessage = (e) => {
+    const data = JSON.parse(e.data)
+    if (data.type === 'new_video') {
+      // add new video to the top of the list
+      videos.value.unshift(data.video)
+    }
+  }
+
+  eventSource.onerror = () => {
+    console.error('SSE connection lost')
+  }
+})
+
+// ✅ close connection when leaving the page
+onUnmounted(() => {
+  if (eventSource) {
+    eventSource.close()
+    eventSource = null
+  }
 })
 </script>
 
 <template>
-  <!-- loading state -->
   <div v-if="loading" class="flex justify-center items-center h-full p-16 bg-gray-200 dark:bg-gray-900">
     <div class="w-12 h-12 border-4 border-[#CB3939] border-t-transparent rounded-full animate-spin"></div>
   </div>
 
-  <!-- empty state -->
   <div v-else-if="videos.length === 0" class="flex flex-col justify-center items-center h-full p-16 gap-4 bg-gray-200 dark:bg-gray-900">
     <img src="../assets/ScrollTubeLogo.png" class="w-24 h-24 opacity-30" />
     <p class="text-gray-500 dark:text-gray-400 text-xl font-semibold">No videos yet</p>
@@ -33,7 +55,6 @@ onMounted(async () => {
     </RouterLink>
   </div>
 
-  <!-- videos grid -->
   <div v-else class="flex flex-wrap gap-4 p-8 bg-gray-200 dark:bg-gray-900 min-h-full">
     <VideoCard
       v-for="video in videos"

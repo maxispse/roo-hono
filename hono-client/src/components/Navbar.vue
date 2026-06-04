@@ -1,30 +1,50 @@
 <script setup>
 import { useDarkMode } from '../composables/useDarkMode'
+import { auth } from '../stores/auth'
+import Notifications from './Notifications.vue'
+
 const { isDark, toggle } = useDarkMode()
 </script>
 
 <template>
-  <div class="flex items-center w-full bg-[#D9D9D9] dark:bg-gray-800 sticky top-0 z-10">
-    <RouterLink to="/">
-    <img 
-      src="../assets/ScrollTubeLogo.png"
-      class="w-[128px] h-[128px] bg-[#DF4F4F] block"
-    />
+  <div class="flex items-center w-full h-[64px] bg-[#1a1a1a] dark:bg-gray-950 shadow-lg sticky top-0 z-10 px-6 gap-4">
+    <RouterLink to="/" class="flex items-center gap-3 shrink-0">
+      <img src="../assets/ScrollTubeLogo.png" class="w-[40px] h-[40px] rounded-lg" />
+      <span class="text-white font-bold text-xl hidden sm:block">
+        Scroll<span class="text-[#CB3939]">Tube</span>
+      </span>
     </RouterLink>
-    <div class="flex flex-row gap-2 justify-center ml-8">
-      <h1 class="text-3xl font-bold text-[#CB3939]">ScrollTube</h1>
+
+    <div class="flex-1 max-w-[500px] mx-auto">
+      <input type="text" placeholder="Search videos..."
+        class="w-full h-[36px] px-4 rounded-full bg-white/10 text-white placeholder-gray-400 text-sm outline-none focus:bg-white/20 transition border border-white/10 focus:border-[#CB3939]" />
     </div>
 
-    <div class="ml-auto mr-8 flex items-center gap-4">
-      <!-- dark mode toggle -->
-      <button
-        @click="toggle"
-        class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xl"
-      >
+    <div class="flex items-center gap-3 ml-auto shrink-0">
+      <button @click="toggle"
+        class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition text-lg">
         {{ isDark ? '☀️' : '🌙' }}
       </button>
-      <RouterLink to="/loginPage">
-        <img src="../assets/image copy.png" class="w-[48px] h-[48px] rounded-2xl" />
+
+      <!-- notifications bell -->
+      <Notifications v-if="auth.isLoggedIn" />
+
+      <RouterLink v-if="auth.isLoggedIn" to="/upload"
+        class="hidden sm:flex items-center gap-2 bg-[#CB3939] hover:bg-[#DF4F4F] text-white px-4 h-[36px] rounded-full text-sm font-semibold transition">
+        ⬆️ Upload
+      </RouterLink>
+
+      <RouterLink v-if="auth.isLoggedIn" to="/channel" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center">
+          <img v-if="auth.avatar" :src="`http://localhost:3000${auth.avatar}`" class="w-full h-full object-cover" />
+          <span v-else class="text-white text-sm font-bold">{{ auth.username?.charAt(0).toUpperCase() }}</span>
+        </div>
+        <span class="hidden sm:block text-white text-sm font-semibold">{{ auth.username }}</span>
+      </RouterLink>
+
+      <RouterLink v-else to="/loginPage"
+        class="bg-[#CB3939] hover:bg-[#DF4F4F] text-white px-4 h-[36px] rounded-full text-sm font-semibold transition flex items-center">
+        Login
       </RouterLink>
     </div>
   </div>
