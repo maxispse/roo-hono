@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "databaza": "tsx src/db/migrations.ts",
+    "migrate": "tsx src/db/migrations.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },

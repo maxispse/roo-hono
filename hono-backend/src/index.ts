@@ -445,6 +445,24 @@ app.get('/videos/:id', async (c) => {
   return c.json(rows[0])
 })
 
+app.delete('/videos/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const id = c.req.param('id')
+
+  // check if video exists and belongs to user
+  const [rows] = await db.query('SELECT * FROM videos WHERE id = ?', [id]) as any
+  if (!rows[0]) return c.json({ error: 'Video not found' }, 404)
+
+  // get owner id
+  const [ownerRows] = await db.query('SELECT id FROM users WHERE username = ?', [rows[0].username]) as any
+  if (ownerRows[0].id !== user.id && user.role !== 'admin') {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  await db.query('DELETE FROM videos WHERE id = ?', [id])
+  return c.json({ message: 'Video deleted' })
+})
+
 // comments
 app.delete('/comments/:id', authMiddleware, async (c) => {
   const user = c.get('user')

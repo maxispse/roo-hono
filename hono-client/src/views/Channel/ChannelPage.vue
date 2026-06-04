@@ -72,6 +72,19 @@ async function logout() {
   auth.logout()
   router.push('/loginPage')
 }
+
+async function deleteVideo(id: number) {
+  if (!confirm('Are you sure you want to delete this video?')) return
+
+  const res = await fetch(`http://localhost:3000/videos/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  })
+
+  if (res.ok) {
+    videos.value = videos.value.filter((v: any) => v.id !== id)
+  }
+}
 </script>
 
 <template>
@@ -93,8 +106,9 @@ async function logout() {
       <div class="flex items-end gap-6 -mt-12 mb-8 overflow-visible">
 
         <!-- avatar -->
-        <div class="w-[100px] h-[100px] rounded-full border-4 overflow-hidden flex items-center justify-center shrink-0 relative z-10"
-  :class="isOwnChannel ? 'border-[#CB3939] bg-[#DF4F4F]' : 'border-white bg-gray-600'">
+        <div
+          class="w-[100px] h-[100px] rounded-full border-4 overflow-hidden flex items-center justify-center shrink-0 relative z-10"
+          :class="isOwnChannel ? 'border-[#CB3939] bg-[#DF4F4F]' : 'border-white bg-gray-600'">
           <img v-if="channelProfile.avatar" :src="`http://localhost:3000${channelProfile.avatar}`"
             class="w-full h-full object-cover" />
           <span v-else class="text-white text-4xl font-bold">
@@ -168,8 +182,15 @@ async function logout() {
 
       <!-- videos grid -->
       <div v-else class="flex flex-wrap gap-4 pb-8">
-        <VideoCard v-for="video in videos" :key="video.id" :id="video.id" :title="video.title" :thumbnail="video.url"
-          :channelName="channelUser" :views="video.views" :uploadDate="video.created_at" />
+        <div v-for="video in videos" :key="video.id" class="relative group">
+          <VideoCard :id="video.id" :title="video.title" :thumbnail="video.url" :channelName="channelUser"
+            :views="video.views" :uploadDate="video.created_at" />
+          <!-- delete button only on own channel -->
+          <button v-if="isOwnChannel" @click="deleteVideo(video.id)"
+            class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition font-semibold">
+            🗑 Delete
+          </button>
+        </div>
       </div>
     </div>
   </div>
