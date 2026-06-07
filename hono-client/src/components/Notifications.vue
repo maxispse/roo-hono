@@ -63,7 +63,7 @@ onUnmounted(() => {
   <div class="relative">
     <!-- bell button -->
     <button @click="openPanel" class="relative w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition text-lg">
-      🔔
+      <img src="../assets/image copy 4.png" class="w-5 h-5" />
       <span v-if="unreadCount > 0"
         class="absolute -top-1 -right-1 w-5 h-5 bg-[#CB3939] text-white text-xs rounded-full flex items-center justify-center font-bold">
         {{ unreadCount > 9 ? '9+' : unreadCount }}

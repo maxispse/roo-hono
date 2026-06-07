@@ -140,13 +140,27 @@ async function submitReport() {
   }, 2000)
 }
 
+async function nextVideo() {
+  // count view when video ends
+  await fetch(`http://localhost:3000/videos/${videoId.value}/view`, {
+    method: 'POST'
+  })
+
+  const currentIndex = allVideos.value.findIndex((v: any) => v.id == videoId.value)
+  if (currentIndex < allVideos.value.length - 1) {
+    router.push(`/videoPage/${allVideos.value[currentIndex + 1].id}`)
+  } else {
+    router.push(`/videoPage/${allVideos.value[0].id}`)
+  }
+}
+
 function copyLink() {
   navigator.clipboard.writeText(window.location.href)
 }
 </script>
 
 <template>
-  <div class="relative w-full h-screen overflow-hidden bg-black" @wheel.prevent="onWheel">
+  <div class="relative w-full h-full overflow-hidden bg-black" @wheel.prevent="onWheel">
 
     <!-- loading -->
     <div v-if="loading" class="flex justify-center items-center h-full">
@@ -156,16 +170,12 @@ function copyLink() {
     <div v-else-if="video" class="relative w-full h-full">
 
       <!-- video — full screen -->
-      <video
-        :src="`http://localhost:3000${video.url}`"
-        class="w-full h-full object-contain"
-        controls
-        autoplay
-        :key="video.id"
-      />
+      <video :src="`http://localhost:3000${video.url}`" class="w-full h-full object-contain" controls autoplay
+        :key="video.id" @ended="nextVideo" />
 
       <!-- bottom info overlay -->
-      <div class="absolute bottom-0 left-0 right-16 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+      <div
+        class="absolute bottom-0 left-0 right-16 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
         <RouterLink :to="`/channel/${video.username}`" class="flex items-center gap-2 mb-2 pointer-events-auto">
           <div class="w-8 h-8 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center">
             <img v-if="video.avatar" :src="`http://localhost:3000${video.avatar}`" class="w-full h-full object-cover" />
@@ -178,52 +188,81 @@ function copyLink() {
       </div>
 
       <!-- right side actions — TikTok style -->
-      <div class="absolute right-4 bottom-24 flex flex-col items-center gap-6">
+  <div class="absolute right-4 bottom-24 flex flex-col items-center gap-6">
 
-        <!-- like -->
-        <button @click="react('like')" class="flex flex-col items-center gap-1">
-          <div :class="userReaction === 'like' ? 'bg-[#CB3939]' : 'bg-white/20'"
-            class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition hover:bg-[#CB3939]">
-            👍
-          </div>
-          <span class="text-white text-xs font-semibold">{{ video.likes }}</span>
-        </button>
+  <!-- like -->
+    <button @click="react('like')" class="flex flex-col items-center gap-1 group">
+    <div
+      :class="userReaction === 'like' ? 'bg-[#CB3939] scale-110' : 'bg-white/20 group-hover:bg-white/30'"
+      class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300 group-hover:scale-125 spin-hover"
+    >
+      👍
+    </div>
+    <span
+      :class="userReaction === 'like' ? 'text-[#CB3939]' : 'text-white'"
+      class="text-xs font-semibold transition-all duration-300 group-hover:scale-110"
+    >
+      {{ video.likes }}
+    </span>
+  </button>
 
-        <!-- dislike -->
-        <button @click="react('dislike')" class="flex flex-col items-center gap-1">
-          <div :class="userReaction === 'dislike' ? 'bg-[#CB3939]' : 'bg-white/20'"
-            class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition hover:bg-[#CB3939]">
-            👎
-          </div>
-          <span class="text-white text-xs font-semibold">{{ video.dislikes }}</span>
-        </button>
+  <!-- dislike -->
+  <button @click="react('dislike')" class="flex flex-col items-center gap-1 group">
+    <div
+      :class="userReaction === 'dislike' ? 'bg-[#CB3939] scale-110' : 'bg-white/20 group-hover:bg-white/30'"
+      class="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all duration-300 group-hover:scale-125 spin-hover"
+    >
+      👎
+    </div>
+    <span
+      :class="userReaction === 'dislike' ? 'text-[#CB3939]' : 'text-white'"
+      class="text-xs font-semibold transition-all duration-300 group-hover:scale-110"
+    >
+      {{ video.dislikes }}
+    </span>
+  </button>
 
-        <!-- comments -->
-        <button @click="showComments = true" class="flex flex-col items-center gap-1">
-          <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl hover:bg-white/30 transition">
-            💬
-          </div>
-          <span class="text-white text-xs font-semibold">{{ video.comment_count }}</span>
-        </button>
+  <!-- comments -->
+  <button @click="showComments = true" class="flex flex-col items-center gap-1 group">
+    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl transition-all duration-300 group-hover:bg-white/30 group-hover:scale-125 bounce-hover">
+      💬
+    </div>
+    <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110">
+      {{ video.comment_count }}
+    </span>
+  </button>
 
-        <!-- share -->
-        <button @click="copyLink" class="flex flex-col items-center gap-1">
-          <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl hover:bg-white/30 transition">
-            🔗
-          </div>
-          <span class="text-white text-xs font-semibold">Share</span>
-        </button>
+  <!-- share -->
+  <button @click="copyLink" class="flex flex-col items-center gap-1 group">
+    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl transition-all duration-300 group-hover:bg-white/30 group-hover:scale-125 float-hover">
+      🔗
+    </div>
+    <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110">Share</span>
+  </button>
 
-        <!-- report -->
-        <button @click="showReportModal = true" class="flex flex-col items-center gap-1">
-          <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl hover:bg-white/30 transition">
-            🚩
-          </div>
-          <span class="text-white text-xs font-semibold">Report</span>
-        </button>
+  <!-- report -->
+  <button @click="showReportModal = true" class="flex flex-col items-center gap-1 group">
+    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl transition-all duration-300 group-hover:bg-red-500/50 group-hover:scale-125 bounce-hover">
+      🚩
+    </div>
+    <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110">Report</span>
+  </button>
 
+  <!-- channel avatar -->
+  <RouterLink :to="`/channel/${video.username}`" class="flex flex-col items-center gap-1 group">
+    <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden transition-all duration-300 group-hover:scale-125 group-hover:border-[#CB3939]">
+      <img v-if="video.avatar" :src="`http://localhost:3000${video.avatar}`" class="w-full h-full object-cover" />
+      <div v-else class="w-full h-full bg-[#CB3939] flex items-center justify-center">
+        <span class="text-white font-bold">{{ video.username?.charAt(0).toUpperCase() }}</span>
       </div>
     </div>
+    <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110 max-w-[60px] truncate">
+      {{ video.username }}
+    </span>
+  </RouterLink>
+
+  </div>
+</div>
 
     <!-- comments panel — slides in from right -->
     <div v-if="showComments"
@@ -232,23 +271,26 @@ function copyLink() {
       <!-- header -->
       <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
         <h2 class="text-lg font-bold dark:text-white">Comments ({{ video?.comment_count }})</h2>
-        <button @click="showComments = false" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-2xl">✕</button>
+        <button @click="showComments = false"
+          class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-2xl">✕</button>
       </div>
 
       <!-- comments list -->
       <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         <div v-for="comment in comments" :key="comment.id" class="flex gap-3">
           <div class="w-9 h-9 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center shrink-0">
-            <img v-if="comment.avatar" :src="`http://localhost:3000${comment.avatar}`" class="w-full h-full object-cover" />
+            <img v-if="comment.avatar" :src="`http://localhost:3000${comment.avatar}`"
+              class="w-full h-full object-cover" />
             <span v-else class="text-white text-sm font-bold">{{ comment.username?.charAt(0).toUpperCase() }}</span>
           </div>
           <div class="flex-1">
             <div class="flex items-center justify-between">
-              <RouterLink :to="`/channel/${comment.username}`" class="font-semibold text-gray-900 dark:text-white text-sm hover:text-[#CB3939]">
+              <RouterLink :to="`/channel/${comment.username}`"
+                class="font-semibold text-gray-900 dark:text-white text-sm hover:text-[#CB3939]">
                 {{ comment.username }}
               </RouterLink>
-              <button v-if="auth.username === comment.username || auth.isAdmin"
-                @click="deleteComment(comment.id)" class="text-red-500 text-xs hover:text-red-700">
+              <button v-if="auth.username === comment.username || auth.isAdmin" @click="deleteComment(comment.id)"
+                class="text-red-500 text-xs hover:text-red-700">
                 Delete
               </button>
             </div>

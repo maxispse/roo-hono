@@ -6,42 +6,36 @@ const route = useRoute()
 </script>
 
 <template>
-  <div class="w-[72px] sm:w-[220px] flex flex-col sticky top-0 h-screen bg-[#801313] dark:bg-gray-950 shadow-xl">
+  <div class="w-[72px] sm:w-[220px] flex flex-col sticky top-0 h-full bg-[#1a1a1a] dark:bg-gray-950 shadow-xl">
 
     <!-- nav items -->
     <div class="flex flex-col gap-1 p-3 mt-4">
 
-      <RouterLink to="/" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
+      <RouterLink v-if="auth.isLoggedIn" to="/" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
         :class="route.path === '/' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
         <img src="../assets/1946488.png" class="w-6 h-6" />
         <span class="hidden sm:block font-semibold text-sm">Home</span>
       </RouterLink>
 
-      <RouterLink to="/stars" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
+      <RouterLink v-if="auth.isLoggedIn" to="/stars" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
         :class="route.path === '/stars' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
         <img src="../assets/images.png" class="w-6 h-6" />
         <span class="hidden sm:block font-semibold text-sm">Subscriptions</span>
       </RouterLink>
 
-      <RouterLink to="/upload" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
-        :class="route.path === '/upload' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
-        <span class="text-2xl">⬆️</span>
+      <RouterLink v-if="auth.isLoggedIn" to="/upload" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
+        :class="route.path === '/upload' ? 'bg-[#CB3939] hover:bg-[#DF4F4F] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
+        <img src="../assets/image copy 6.png" class="w-6 h-6" />
         <span class="hidden sm:block font-semibold text-sm">Upload</span>
       </RouterLink>
 
-      <RouterLink to="/channel" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
-        :class="route.path === '/channel' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
-        <span class="text-2xl">👤</span>
-        <span class="hidden sm:block font-semibold text-sm">My Channel</span>
-      </RouterLink>
-
-      <RouterLink to="/settings" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
+      <RouterLink v-if="auth.isLoggedIn" to="/settings" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
         :class="route.path === '/settings' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
         <img src="../assets/2821378.png" class="w-6 h-6" />
         <span class="hidden sm:block font-semibold text-sm">Settings</span>
       </RouterLink>
 
-      <RouterLink to="/admin" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
+      <RouterLink v-if="auth.isLoggedIn && auth.role === 'admin'" to="/admin" class="group flex items-center gap-4 px-3 py-3 rounded-xl transition"
         :class="route.path === '/admin' ? 'bg-[#CB3939] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'">
         <img src="../assets/image copy 3.png" class="w-6 h-6" />
         <span class="hidden sm:block font-semibold text-sm">Admin</span>

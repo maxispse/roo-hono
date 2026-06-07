@@ -23,6 +23,13 @@ async function fetchChannelData() {
   loading.value = true
   try {
     const profileRes = await fetch(`http://localhost:3000/users/${channelUser.value}`)
+    
+    // handle deleted user
+    if (!profileRes.ok) {
+      router.push('/404')
+      return
+    }
+    
     channelProfile.value = await profileRes.json()
 
     const res = await fetch(`http://localhost:3000/videos/user/${channelUser.value}`, {
@@ -183,8 +190,17 @@ async function deleteVideo(id: number) {
       <!-- videos grid -->
       <div v-else class="flex flex-wrap gap-4 pb-8">
         <div v-for="video in videos" :key="video.id" class="relative group">
-          <VideoCard :id="video.id" :title="video.title" :thumbnail="video.url" :channelName="channelUser"
-            :views="video.views" :uploadDate="video.created_at" />
+          <VideoCard
+  v-for="video in videos"
+  :key="video.id"
+  :id="video.id"
+  :title="video.title"
+  :thumbnail="video.url"
+  :channelName="channelUser"
+  :avatar="channelProfile.avatar"
+  :views="video.views"
+  :uploadDate="video.created_at"
+/>
           <!-- delete button only on own channel -->
           <button v-if="isOwnChannel" @click="deleteVideo(video.id)"
             class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition font-semibold">

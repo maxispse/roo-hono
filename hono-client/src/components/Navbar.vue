@@ -2,22 +2,52 @@
 import { useDarkMode } from '../composables/useDarkMode'
 import { auth } from '../stores/auth'
 import Notifications from './Notifications.vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const { isDark, toggle } = useDarkMode()
+const router = useRouter()
+const searchQuery = ref('')
+
+const emit = defineEmits(['toggle-sidebar'])
+
+function search() {
+  if (!searchQuery.value.trim()) return
+  router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  searchQuery.value = ''
+}
 </script>
 
 <template>
   <div class="flex items-center w-full h-[64px] bg-[#1a1a1a] dark:bg-gray-950 shadow-lg sticky top-0 z-10 px-6 gap-4">
+    
+    <!-- sidebar toggle button -->
+    <button
+      v-if="auth.isLoggedIn"
+      @click="emit('toggle-sidebar')"
+      class="w-9 h-10 rounded-2xl hover:bg-white/10 flex items-center justify-center transition text-lg shrink-0"
+    >
+    <img src="../assets/ScrollTubeLogo.png" class="w-[40px] h-[40px] rounded-lg" />
+    </button>
+
     <RouterLink to="/" class="flex items-center gap-3 shrink-0">
-      <img src="../assets/ScrollTubeLogo.png" class="w-[40px] h-[40px] rounded-lg" />
       <span class="text-white font-bold text-xl hidden sm:block">
         Scroll<span class="text-[#CB3939]">Tube</span>
       </span>
     </RouterLink>
 
-    <div class="flex-1 max-w-[500px] mx-auto">
-      <input type="text" placeholder="Search videos..."
-        class="w-full h-[36px] px-4 rounded-full bg-white/10 text-white placeholder-gray-400 text-sm outline-none focus:bg-white/20 transition border border-white/10 focus:border-[#CB3939]" />
+    <div class="flex-1 max-w-[500px] mx-auto flex gap-2">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search videos..."
+        class="flex-1 h-[36px] px-4 rounded-full bg-white/10 text-white placeholder-gray-400 text-sm outline-none focus:bg-white/20 transition border border-white/10 focus:border-[#CB3939]"
+        @keyup.enter="search"
+      />
+      <button @click="search"
+        class="h-[36px] px-4 bg-[#CB3939] hover:bg-[#DF4F4F] text-white rounded-full text-sm font-semibold transition">
+        🔍
+      </button>
     </div>
 
     <div class="flex items-center gap-3 ml-auto shrink-0">
@@ -26,7 +56,6 @@ const { isDark, toggle } = useDarkMode()
         {{ isDark ? '☀️' : '🌙' }}
       </button>
 
-      <!-- notifications bell -->
       <Notifications v-if="auth.isLoggedIn" />
 
       <RouterLink v-if="auth.isLoggedIn" to="/upload"

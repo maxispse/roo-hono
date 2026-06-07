@@ -11,6 +11,7 @@ import UploadPage from '../views/Upload/UploadPage.vue'
 import AdminPage from '../views/Admin/AdminPage.vue'
 import { auth } from '../stores/auth'
 import NotFound from '../views/NotFound.vue'
+import SearchPage from '../views/Search/SearchPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,21 +26,28 @@ const router = createRouter({
     { path: '/channel', component: ChannelPage, meta: { requiresAuth: true } },
     { path: '/upload', component: UploadPage, meta: { requiresAuth: true } },
     { path: '/admin', component: AdminPage, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/404', component: NotFound },
     { path: '/:pathMatch(.*)*', component: NotFound },
     { path: '/channel/:username', component: ChannelPage },
-    { path: '/channel', component: ChannelPage, meta: { requiresAuth: true } }
+    { path: '/channel', component: ChannelPage, meta: { requiresAuth: true } },
+    { path: '/search', component: SearchPage }
   ]
 })
 
 router.beforeEach(async (to) => {
-  // wait for auth to be checked first
   if (auth.username === null) {
     await auth.fetchMe()
+  }
+
+  // redirect logged in users away from login and register
+  if ((to.path === '/loginPage' || to.path === '/register') && auth.isLoggedIn) {
+    return '/'
   }
 
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
     return '/loginPage'
   }
+
   if (to.meta.requiresAdmin && !auth.isAdmin) {
     return '/'
   }
