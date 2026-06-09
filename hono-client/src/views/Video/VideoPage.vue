@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { auth } from '../../stores/auth'
+import Toast from '../../components/Toast.vue'
+import UserAvatar from '../../components/UserAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,7 +21,60 @@ const reportReason = ref('')
 const reportSuccess = ref(false)
 const commentError = ref('')
 let isScrolling = false
+const toast = ref(null as any)
 
+
+
+const videoRef = ref(null as HTMLVideoElement | null)
+
+function onKeydown(e: KeyboardEvent) {
+  // ignore if typing in an input
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault()
+      nextVideo()
+      break
+    case 'ArrowUp': {
+      e.preventDefault()
+      const currentIndex = allVideos.value.findIndex((v: any) => v.id == videoId.value)
+      if (currentIndex > 0) {
+        router.push(`/videoPage/${allVideos.value[currentIndex - 1].id}`)
+      }
+      break
+    }
+    case 'f':
+    case 'F':
+      e.preventDefault()
+      if (videoRef.value) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+        } else {
+          videoRef.value.requestFullscreen()
+        }
+      }
+      break
+    case ' ':
+      e.preventDefault()
+      if (videoRef.value) {
+        if (videoRef.value.paused) {
+          videoRef.value.play()
+        } else {
+          videoRef.value.pause()
+        }
+      }
+      break
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
 async function loadVideo(id: any) {
   loading.value = true
   try {
@@ -156,6 +211,7 @@ async function nextVideo() {
 
 function copyLink() {
   navigator.clipboard.writeText(window.location.href)
+  toast.value.show('Link copied!')
 }
 </script>
 
@@ -170,25 +226,34 @@ function copyLink() {
     <div v-else-if="video" class="relative w-full h-full">
 
       <!-- video — full screen -->
-      <video :src="`http://localhost:3000${video.url}`" class="w-full h-full object-contain" controls autoplay
-        :key="video.id" @ended="nextVideo" />
+      <video
+  ref="videoRef"
+  :src="`http://localhost:3000${video.url}`"
+  class="w-full h-full object-contain"
+  controls
+  autoplay
+  :key="video.id"
+  @ended="nextVideo"
+/>
 
       <!-- bottom info overlay -->
-      <div
-        class="absolute bottom-0 left-0 right-16 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-        <RouterLink :to="`/channel/${video.username}`" class="flex items-center gap-2 mb-2 pointer-events-auto">
-          <div class="w-8 h-8 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center">
-            <img v-if="video.avatar" :src="`http://localhost:3000${video.avatar}`" class="w-full h-full object-cover" />
-            <span v-else class="text-white text-sm font-bold">{{ video.username?.charAt(0).toUpperCase() }}</span>
-          </div>
-          <span class="text-white font-semibold">{{ video.username }}</span>
-        </RouterLink>
-        <h1 class="text-white font-bold text-lg">{{ video.title }}</h1>
-        <p class="text-gray-300 text-sm mt-1">↑ scroll up • scroll down ↓</p>
-      </div>
+      <div class="absolute bottom-0 left-0 right-16 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+  <RouterLink :to="`/channel/${video.username}`" class="flex items-center gap-2 mb-2 pointer-events-auto">
+    <div class="w-8 h-8 rounded-full bg-primary overflow-hidden flex items-center justify-center">
+      <img v-if="video.avatar" :src="`http://localhost:3000${video.avatar}`" class="w-full h-full object-cover" />
+      <span v-else class="text-white text-sm font-bold">{{ video.username?.charAt(0).toUpperCase() }}</span>
+    </div>
+    <span class="text-white font-semibold">{{ video.username }}</span>
+  </RouterLink>
+  <h1 class="text-white font-bold text-lg">{{ video.title }}</h1>
+  <p class="text-gray-400 text-xs mt-2">
+    ↑↓ switch video &nbsp;·&nbsp; Space pause/play &nbsp;·&nbsp; F fullscreen
+  </p>
+</div>
 
       <!-- right side actions — TikTok style -->
   <div class="absolute right-4 bottom-24 flex flex-col items-center gap-6">
+
 
   <!-- like -->
     <button @click="react('like')" class="flex flex-col items-center gap-1 group">
@@ -240,6 +305,7 @@ function copyLink() {
     <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110">Share</span>
   </button>
 
+  <Toast ref="toast" />
   <!-- report -->
   <button @click="showReportModal = true" class="flex flex-col items-center gap-1 group">
     <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl transition-all duration-300 group-hover:bg-red-500/50 group-hover:scale-125 bounce-hover">
@@ -248,18 +314,17 @@ function copyLink() {
     <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110">Report</span>
   </button>
 
+  
   <!-- channel avatar -->
-  <RouterLink :to="`/channel/${video.username}`" class="flex flex-col items-center gap-1 group">
-    <div class="w-12 h-12 rounded-full border-2 border-white overflow-hidden transition-all duration-300 group-hover:scale-125 group-hover:border-[#CB3939]">
-      <img v-if="video.avatar" :src="`http://localhost:3000${video.avatar}`" class="w-full h-full object-cover" />
-      <div v-else class="w-full h-full bg-[#CB3939] flex items-center justify-center">
-        <span class="text-white font-bold">{{ video.username?.charAt(0).toUpperCase() }}</span>
-      </div>
-    </div>
-    <span class="text-white text-xs font-semibold transition-all duration-300 group-hover:scale-110 max-w-[60px] truncate">
-      {{ video.username }}
-    </span>
-  </RouterLink>
+<RouterLink :to="`/channel/${video.username}`" class="flex flex-col items-center gap-1 group">
+  <UserAvatar
+    :avatar="video.avatar"
+    :username="video.username"
+    size="sm"
+    class="transition-all duration-300 group-hover:scale-125"
+  />
+  <span class="text-white text-xs font-semibold max-w-[60px] truncate">{{ video.username }}</span>
+</RouterLink>
 
   </div>
 </div>
@@ -277,44 +342,51 @@ function copyLink() {
 
       <!-- comments list -->
       <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        <div v-for="comment in comments" :key="comment.id" class="flex gap-3">
-          <div class="w-9 h-9 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center shrink-0">
-            <img v-if="comment.avatar" :src="`http://localhost:3000${comment.avatar}`"
-              class="w-full h-full object-cover" />
-            <span v-else class="text-white text-sm font-bold">{{ comment.username?.charAt(0).toUpperCase() }}</span>
-          </div>
-          <div class="flex-1">
-            <div class="flex items-center justify-between">
-              <RouterLink :to="`/channel/${comment.username}`"
-                class="font-semibold text-gray-900 dark:text-white text-sm hover:text-[#CB3939]">
-                {{ comment.username }}
-              </RouterLink>
-              <button v-if="auth.username === comment.username || auth.isAdmin" @click="deleteComment(comment.id)"
-                class="text-red-500 text-xs hover:text-red-700">
-                Delete
-              </button>
-            </div>
-            <p class="text-gray-700 dark:text-gray-300 text-sm mt-1">{{ comment.content }}</p>
-            <p class="text-gray-400 text-xs mt-1">{{ new Date(comment.created_at).toLocaleDateString() }}</p>
-          </div>
-        </div>
+  <div v-for="comment in comments" :key="comment.id" class="flex gap-3">
+    <UserAvatar
+      :avatar="comment.avatar"
+      :username="comment.username"
+      size="sm"
+    />
+    <div class="flex-1">
+      <div class="flex items-center justify-between">
+        <RouterLink :to="`/channel/${comment.username}`"
+          class="font-semibold text-gray-900 dark:text-white text-sm hover:text-primary">
+          {{ comment.username }}
+        </RouterLink>
+        <button v-if="auth.username === comment.username || auth.isAdmin" @click="deleteComment(comment.id)"
+          class="text-red-500 text-xs hover:text-red-700">
+          Delete
+        </button>
       </div>
+      <p class="text-gray-700 dark:text-gray-300 text-sm mt-1">{{ comment.content }}</p>
+      <p class="text-gray-400 text-xs mt-1">{{ new Date(comment.created_at).toLocaleDateString() }}</p>
+    </div>
+  </div>
+</div>
 
       <!-- post comment -->
-      <div class="p-4 border-t dark:border-gray-700">
-        <div v-if="auth.isLoggedIn" class="flex gap-2">
-          <input v-model="newComment" type="text" placeholder="Add a comment..."
-            class="flex-1 border rounded-full px-4 py-2 text-sm outline-none focus:border-[#CB3939] dark:bg-gray-800 dark:text-white dark:border-gray-600"
-            @keyup.enter="postComment" />
-          <button @click="postComment"
-            class="bg-[#CB3939] text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#DF4F4F] transition">
-            Post
-          </button>
-        </div>
-        <RouterLink v-else to="/loginPage" class="text-[#CB3939] text-sm">
-          Log in to comment
-        </RouterLink>
-      </div>
+      <!-- post comment -->
+<div class="p-4 border-t dark:border-gray-700">
+  <div v-if="auth.isLoggedIn" class="flex gap-2 items-center">
+    <UserAvatar
+      :avatar="auth.avatar"
+      :username="auth.username"
+      :frame="auth.frame"
+      size="sm"
+    />
+    <input v-model="newComment" type="text" placeholder="Add a comment..."
+      class="flex-1 border rounded-full px-4 py-2 text-sm outline-none focus:border-primary dark:bg-gray-800 dark:text-white dark:border-gray-600"
+      @keyup.enter="postComment" />
+    <button @click="postComment"
+      class="bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold hover-primary transition">
+      Post
+    </button>
+  </div>
+  <RouterLink v-else to="/loginPage" class="text-primary text-sm">
+    Log in to comment
+  </RouterLink>
+</div>
     </div>
 
     <!-- report modal -->
@@ -344,6 +416,8 @@ function copyLink() {
         </div>
       </div>
     </div>
+    <!-- edit modal -->
+
 
   </div>
 </template>

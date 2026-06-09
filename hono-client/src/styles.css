@@ -1,8 +1,11 @@
 @import 'tailwindcss';
 @variant dark (&:where(.dark, .dark *));
 
-@import 'tailwindcss';
-@variant dark (&:where(.dark, .dark *));
+:root {
+  --color-primary: #CB3939;
+  --color-hover: #DF4F4F;
+  --color-light: #DF4F4F;
+}
 
 @keyframes spin-once {
   from { transform: rotate(0deg); }
@@ -20,14 +23,19 @@
   50% { transform: translateY(-6px); }
 }
 
-.spin-hover:hover {
-  animation: spin-once 0.5s ease;
+.spin-hover:hover { animation: spin-once 0.5s ease; }
+.bounce-hover:hover { animation: bounce-in 0.3s ease; }
+.float-hover:hover { animation: float 0.8s ease infinite; }
+
+/* theme classes */
+.bg-primary { background-color: var(--color-primary) !important; }
+.text-primary { color: var(--color-primary) !important; }
+.border-primary { border-color: var(--color-primary) !important; }
+.hover-primary:hover { background-color: var(--color-hover) !important; }
+.bg-surface {
+  background-color: color-mix(in srgb, var(--color-primary) 5%, white);
 }
 
-.bounce-hover:hover {
-  animation: bounce-in 0.3s ease;
-}
-
-.float-hover:hover {
-  animation: float 0.8s ease infinite;
+.bg-surface-dark {
+  background-color: color-mix(in srgb, var(--color-primary) 10%, #111827);
 }

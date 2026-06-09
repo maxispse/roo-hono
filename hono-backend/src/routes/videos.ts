@@ -27,6 +27,7 @@ const reportSchema = z.object({
   reason: z.string().min(1, 'Reason is required')
 })
 
+
 videos.get('/', async (c) => {
   const [rows] = await db.query(`
     SELECT videos.*, users.avatar
@@ -48,11 +49,17 @@ videos.post('/upload', authMiddleware, async (c) => {
   const file = body['video'] as File
   const title = body['title'] as string
   const username = body['username'] as string
+  const description = body['description'] as string || ''
 
   if (!file) return c.json({ error: 'No file provided' }, 400)
 
   const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg']
   if (!allowedTypes.includes(file.type)) return c.json({ error: 'Only mp4, webm, and ogg files are allowed' }, 400)
+
+  // ✅ add size validation
+  if (file.size > 50 * 1024 * 1024) {
+    return c.json({ error: 'File too large, max 50MB' }, 400)
+  }
 
   const uploadsDir = join(process.cwd(), 'uploads')
   if (!existsSync(uploadsDir)) await mkdir(uploadsDir)
@@ -64,8 +71,8 @@ videos.post('/upload', authMiddleware, async (c) => {
 
   const url = `/uploads/${filename}`
   const [result] = await db.query(
-    'INSERT INTO videos (url, title, username) VALUES (?, ?, ?)',
-    [url, title, username]
+    'INSERT INTO videos (url, title, username, size, description) VALUES (?, ?, ?, ?, ?)',
+    [url, title, username, file.size, description]
   ) as any
 
   broadcast({
@@ -222,9 +229,31 @@ videos.get('/:id', async (c) => {
   return c.json(rows[0])
 })
 
+videos.patch('/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const id = c.req.param('id')
+  const { title, description } = await c.req.json()
+
+  // check ownership
+  const [rows] = await db.query('SELECT * FROM videos WHERE id = ?', [id]) as any
+  if (!rows[0]) return c.json({ error: 'Video not found' }, 404)
+
+  const [ownerRows] = await db.query('SELECT id FROM users WHERE username = ?', [rows[0].username]) as any
+  if (ownerRows[0].id !== user.id && user.role !== 'admin') {
+    return c.json({ error: 'Forbidden' }, 403)
+  }
+
+  await db.query(
+    'UPDATE videos SET title = ?, description = ? WHERE id = ?',
+    [title, description, id]
+  )
+  return c.json({ message: 'Video updated', title, description })
+})
+
 videos.post('/:id/view', async (c) => {
   const id = c.req.param('id')
   await db.query('UPDATE videos SET views = views + 1 WHERE id = ?', [id])
   return c.json({ message: 'View counted' })
 })
+
 export default videos

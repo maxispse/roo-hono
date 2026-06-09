@@ -88,9 +88,38 @@ users.delete('/me', authMiddleware, async (c) => {
 
 users.get('/:username', async (c) => {
   const username = c.req.param('username')
-  const [rows] = await db.query('SELECT id, username, avatar FROM users WHERE username = ?', [username]) as any
+  const [rows] = await db.query(
+    'SELECT id, username, avatar, banner FROM users WHERE username = ?',
+    [username]
+  ) as any
   if (!rows[0]) return c.json({ error: 'User not found' }, 404)
   return c.json(rows[0])
+})
+
+users.post('/banner', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const body = await c.req.parseBody()
+  const file = body['banner'] as File
+
+  if (!file) return c.json({ error: 'No file provided' }, 400)
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+  if (!allowedTypes.includes(file.type)) return c.json({ error: 'Only jpg, png, and webp files are allowed' }, 400)
+
+  if (file.size > 5 * 1024 * 1024) return c.json({ error: 'File too large, max 5MB' }, 400)
+
+  const uploadsDir = join(process.cwd(), 'uploads/banners')
+  if (!existsSync(uploadsDir)) await mkdir(uploadsDir, { recursive: true })
+
+  const filename = `${user.id}-${Date.now()}.${file.name.split('.').pop()}`
+  const filepath = join(uploadsDir, filename)
+  const buffer = await file.arrayBuffer()
+  await writeFile(filepath, Buffer.from(buffer))
+
+  const bannerUrl = `/uploads/banners/${filename}`
+  await db.query('UPDATE users SET banner = ? WHERE id = ?', [bannerUrl, user.id])
+
+  return c.json({ message: 'Banner updated', banner: bannerUrl })
 })
 
 export default users

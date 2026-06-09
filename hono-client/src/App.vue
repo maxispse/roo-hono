@@ -14,7 +14,7 @@ const sidebarOpen = ref(true)
       <Transition name="slide">
         <Sidebar v-if="auth.isLoggedIn && sidebarOpen" />
       </Transition>
-      <div class="flex-1 bg-gray-200 dark:bg-gray-900 overflow-y-auto">
+      <div class="flex-1 overflow-y-auto bg-surface dark:bg-surface-dark">
         <RouterView />
       </div>
     </div>

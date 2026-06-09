@@ -1,14 +1,16 @@
 <script setup>
 import { useDarkMode } from '../composables/useDarkMode'
 import { auth } from '../stores/auth'
+import { useTheme } from '../composables/useTheme'
 import Notifications from './Notifications.vue'
+import UserAvatar from './UserAvatar.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const { isDark, toggle } = useDarkMode()
+const { isPro } = useTheme()
 const router = useRouter()
 const searchQuery = ref('')
-
 const emit = defineEmits(['toggle-sidebar'])
 
 function search() {
@@ -16,6 +18,7 @@ function search() {
   router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
   searchQuery.value = ''
 }
+
 </script>
 
 <template>
@@ -58,18 +61,31 @@ function search() {
 
       <Notifications v-if="auth.isLoggedIn" />
 
+      <!-- pro button -->
+<RouterLink to="/pro"
+  v-if="!isPro"
+  class="hidden sm:flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-yellow-900 px-3 h-[36px] rounded-full text-sm font-bold transition">
+  ✨ Pro
+</RouterLink>
+<span v-else
+  class="hidden sm:flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-3 h-[36px] rounded-full text-sm font-bold">
+  ✨ Pro
+</span>
+
       <RouterLink v-if="auth.isLoggedIn" to="/upload"
         class="hidden sm:flex items-center gap-2 bg-[#CB3939] hover:bg-[#DF4F4F] text-white px-4 h-[36px] rounded-full text-sm font-semibold transition">
         ⬆️ Upload
       </RouterLink>
 
       <RouterLink v-if="auth.isLoggedIn" to="/channel" class="flex items-center gap-2">
-        <div class="w-9 h-9 rounded-full bg-[#CB3939] overflow-hidden flex items-center justify-center">
-          <img v-if="auth.avatar" :src="`http://localhost:3000${auth.avatar}`" class="w-full h-full object-cover" />
-          <span v-else class="text-white text-sm font-bold">{{ auth.username?.charAt(0).toUpperCase() }}</span>
-        </div>
-        <span class="hidden sm:block text-white text-sm font-semibold">{{ auth.username }}</span>
-      </RouterLink>
+  <UserAvatar
+    :avatar="auth.avatar"
+    :username="auth.username"
+    :frame="auth.frame"
+    size="sm"
+  />
+  <span class="hidden sm:block text-white text-sm font-semibold">{{ auth.username }}</span>
+</RouterLink>
 
       <RouterLink v-else to="/loginPage"
         class="bg-[#CB3939] hover:bg-[#DF4F4F] text-white px-4 h-[36px] rounded-full text-sm font-semibold transition flex items-center">

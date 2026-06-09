@@ -3,15 +3,40 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { auth } from '../../stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import VideoCard from '../../components/VideoCard.vue'
+import UserAvatar from '../../components/UserAvatar.vue'
+import { useTheme } from '../../composables/useTheme'
 
+const { isPro } = useTheme()
 const router = useRouter()
 const route = useRoute()
 const videos = ref([])
 const loading = ref(true)
 const subscriberCount = ref(0)
 const isSubscribed = ref(false)
-const channelProfile = ref({ username: '', avatar: null as string | null })
+const channelProfile = ref({ username: '', avatar: null as string | null, banner: null as string | null })
+const editingVideo = ref(null as any)
+const editTitle = ref('')
+const editDescription = ref('')
 
+function openEdit(video: any) {
+  editingVideo.value = video
+  editTitle.value = video.title
+  editDescription.value = video.description || ''
+}
+
+async function saveEdit() {
+  const res = await fetch(`http://localhost:3000/videos/${editingVideo.value.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ title: editTitle.value, description: editDescription.value })
+  })
+  if (res.ok) {
+    editingVideo.value.title = editTitle.value
+    editingVideo.value.description = editDescription.value
+    editingVideo.value = null
+  }
+}
 const channelUser = computed(() => {
   if (Array.isArray(route.params.username)) return route.params.username[0]
   return route.params.username || auth.username
@@ -23,13 +48,13 @@ async function fetchChannelData() {
   loading.value = true
   try {
     const profileRes = await fetch(`http://localhost:3000/users/${channelUser.value}`)
-    
+
     // handle deleted user
     if (!profileRes.ok) {
       router.push('/404')
       return
     }
-    
+
     channelProfile.value = await profileRes.json()
 
     const res = await fetch(`http://localhost:3000/videos/user/${channelUser.value}`, {
@@ -97,12 +122,14 @@ async function deleteVideo(id: number) {
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
 
-    <!-- banner — red for own channel, dark for others -->
-    <div :class="isOwnChannel ? 'bg-[#CB3939]' : 'bg-gray-800'" class="w-full h-[200px] relative overflow-visible">
-      <div class="absolute inset-0 opacity-20"
+    <!-- banner -->
+    <div class="w-full h-[200px] relative overflow-hidden"
+      :class="!channelProfile.banner ? (isOwnChannel ? 'bg-[#CB3939]' : 'bg-gray-800') : ''">
+      <img v-if="channelProfile.banner" :src="`http://localhost:3000${channelProfile.banner}`"
+        class="w-full h-full object-cover" />
+      <div v-else class="absolute inset-0 opacity-20"
         :style="isOwnChannel ? 'background: repeating-linear-gradient(45deg, #fff 0px, #fff 1px, transparent 0px, transparent 50%)' : ''">
       </div>
-      <!-- own channel badge -->
       <div v-if="isOwnChannel"
         class="absolute top-4 right-4 bg-white/20 text-white text-sm px-3 py-1 rounded-full font-semibold">
         Your Channel
@@ -110,25 +137,22 @@ async function deleteVideo(id: number) {
     </div>
 
     <div class="max-w-5xl mx-auto w-full px-8">
-      <div class="flex items-end gap-6 -mt-12 mb-8 overflow-visible">
+      <div class="flex flex-col md:flex-row md:items-end gap-6 -mt-12 mb-8">
 
         <!-- avatar -->
-        <div
-          class="w-[100px] h-[100px] rounded-full border-4 overflow-hidden flex items-center justify-center shrink-0 relative z-10"
-          :class="isOwnChannel ? 'border-[#CB3939] bg-[#DF4F4F]' : 'border-white bg-gray-600'">
-          <img v-if="channelProfile.avatar" :src="`http://localhost:3000${channelProfile.avatar}`"
-            class="w-full h-full object-cover" />
-          <span v-else class="text-white text-4xl font-bold">
-            {{ channelUser?.toString().charAt(0).toUpperCase() }}
-          </span>
-        </div>
+        <UserAvatar :avatar="channelProfile.avatar" :username="channelUser?.toString()"
+          :frame="isOwnChannel ? auth.frame : 'none'" size="xl" class="relative z-10" />
 
         <div class="mt-12">
           <div class="flex items-center gap-2">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ channelUser }}</h1>
-            <!-- own channel indicator -->
-            <span v-if="isOwnChannel"
-              class="bg-[#CB3939] text-white text-xs px-2 py-0.5 rounded-full font-semibold">You</span>
+            <div class="flex items-center gap-2">
+              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ channelUser }}</h1>
+              <span v-if="isOwnChannel"
+                class="bg-primary text-white text-xs px-2 py-0.5 rounded-full font-semibold">You</span>
+              <span v-if="isOwnChannel && isPro"
+                class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-xs px-2 py-0.5 rounded-full font-bold">✨
+                Pro</span>
+            </div>
           </div>
           <p class="text-gray-500 dark:text-gray-400 text-sm">{{ subscriberCount }} subscribers • {{ videos.length }}
             videos</p>
@@ -190,22 +214,41 @@ async function deleteVideo(id: number) {
       <!-- videos grid -->
       <div v-else class="flex flex-wrap gap-4 pb-8">
         <div v-for="video in videos" :key="video.id" class="relative group">
-          <VideoCard
-  v-for="video in videos"
-  :key="video.id"
-  :id="video.id"
-  :title="video.title"
-  :thumbnail="video.url"
-  :channelName="channelUser"
-  :avatar="channelProfile.avatar"
-  :views="video.views"
-  :uploadDate="video.created_at"
-/>
-          <!-- delete button only on own channel -->
-          <button v-if="isOwnChannel" @click="deleteVideo(video.id)"
-            class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition font-semibold">
-            🗑 Delete
-          </button>
+          <VideoCard :id="video.id" :title="video.title" :thumbnail="video.url" :channelName="channelUser"
+            :avatar="channelProfile.avatar" :views="video.views" :uploadDate="video.created_at" />
+          <!-- action buttons on own channel -->
+          <div v-if="isOwnChannel"
+            class="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+            <button @click="openEdit(video)"
+              class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+              ✏️ Edit
+            </button>
+            <button @click="deleteVideo(video.id)"
+              class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+              🗑 Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- edit modal -->
+      <div v-if="editingVideo" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-[500px] flex flex-col gap-4">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Edit Video</h2>
+          <input v-model="editTitle" type="text" placeholder="Title"
+            class="border p-2 rounded w-full dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+          <textarea v-model="editDescription" placeholder="Description"
+            class="border p-2 rounded w-full h-24 resize-none dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+          <div class="flex gap-2">
+            <button @click="editingVideo = null"
+              class="flex-1 border border-gray-300 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white transition">
+              Cancel
+            </button>
+            <button @click="saveEdit"
+              class="flex-1 bg-primary text-white px-4 py-2 rounded-lg font-semibold hover-primary transition">
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>

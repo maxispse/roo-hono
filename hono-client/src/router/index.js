@@ -12,6 +12,9 @@ import AdminPage from '../views/Admin/AdminPage.vue'
 import { auth } from '../stores/auth'
 import NotFound from '../views/NotFound.vue'
 import SearchPage from '../views/Search/SearchPage.vue'
+import ProPage from '../views/Pro/ProPage.vue'
+
+
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,7 +33,8 @@ const router = createRouter({
     { path: '/:pathMatch(.*)*', component: NotFound },
     { path: '/channel/:username', component: ChannelPage },
     { path: '/channel', component: ChannelPage, meta: { requiresAuth: true } },
-    { path: '/search', component: SearchPage }
+    { path: '/search', component: SearchPage },
+    { path: '/pro', component: ProPage }
   ]
 })
 

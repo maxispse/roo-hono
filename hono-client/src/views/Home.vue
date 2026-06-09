@@ -65,7 +65,7 @@ onUnmounted(() => {
   </RouterLink>
 </div>
 
-  <div v-else class="flex flex-wrap gap-4 p-8 bg-gray-200 dark:bg-gray-900 min-h-full">
+  <div class="flex flex-wrap gap-4 p-8 bg-surface dark:bg-surface-dark min-h-full">
     <VideoCard
   v-for="video in videos"
   :key="video.id"

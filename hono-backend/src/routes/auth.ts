@@ -19,6 +19,8 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required')
 })
 
+
+
 auth.post('/register', async (c) => {
   const body = await c.req.json()
   const result = registerSchema.safeParse(body)
@@ -71,7 +73,10 @@ auth.get('/me', async (c) => {
   if (!token) return c.json({ error: 'Not logged in' }, 401)
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as any
-    const [rows] = await db.query('SELECT id, email, username, role, avatar FROM users WHERE id = ?', [decoded.id]) as any
+    const [rows] = await db.query(
+      'SELECT id, email, username, role, avatar, banner FROM users WHERE id = ?',
+      [decoded.id]
+    ) as any
     return c.json(rows[0])
   } catch {
     return c.json({ error: 'Invalid token' }, 401)
